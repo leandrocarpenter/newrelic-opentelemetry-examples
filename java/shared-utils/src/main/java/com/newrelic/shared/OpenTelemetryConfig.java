@@ -16,9 +16,13 @@ import io.opentelemetry.exporter.otlp.trace.OtlpGrpcSpanExporter;
 import io.opentelemetry.sdk.OpenTelemetrySdk;
 import io.opentelemetry.sdk.logs.SdkLogEmitterProvider;
 import io.opentelemetry.sdk.logs.export.BatchLogProcessor;
+import io.opentelemetry.sdk.metrics.InstrumentSelector;
+import io.opentelemetry.sdk.metrics.InstrumentType;
 import io.opentelemetry.sdk.metrics.SdkMeterProvider;
+import io.opentelemetry.sdk.metrics.View;
 import io.opentelemetry.sdk.metrics.export.MetricExporter;
 import io.opentelemetry.sdk.metrics.export.PeriodicMetricReader;
+import io.opentelemetry.sdk.metrics.view.ExponentialHistogramAggregation;
 import io.opentelemetry.sdk.resources.Resource;
 import io.opentelemetry.sdk.trace.SdkTracerProvider;
 import io.opentelemetry.sdk.trace.export.BatchSpanProcessor;
@@ -70,7 +74,12 @@ public class OpenTelemetryConfig {
     }
 
     // Configure metrics
-    var meterProviderBuilder = SdkMeterProvider.builder().setResource(resource);
+    var meterProviderBuilder =
+        SdkMeterProvider.builder()
+            .setResource(resource)
+            .registerView(
+                InstrumentSelector.builder().setType(InstrumentType.HISTOGRAM).build(),
+                View.builder().setAggregation(new ExponentialHistogramAggregation()).build());
 
     var metricExporterBuilder =
         OtlpGrpcMetricExporter.builder()
